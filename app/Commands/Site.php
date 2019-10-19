@@ -54,38 +54,37 @@ class Site extends Command
         $this->commandInfo('Setting up for: "' . $this->project . '"');
         $this->startTime = now();
         $this->info('Cloning repository 1/5');
-//        $this->manageVCS();
-        // todo carry on here
+        $this->manageVCS();
         $this->info('Installing NPM packages 2/5');
-//        $this->runNPM();
+        $this->runNPM();
         $this->info('Installing Composer packages 3/5');
-//        $this->runComposer();
+        $this->runComposer();
         $this->info('Updating configurations 4/5');
-//        $this->updateVHosts();
-//        $this->updateHosts(); // (if not in administrator mode (ask for restart, save progress)
-        $this->restartXampp();
+        $this->line(' - Copying .env file');
         $this->copyEnv();
-        // copy env file if found
-
-        // if xampp's running restart
+        $this->line(' - Updating httpd-vhosts.conf');
+        $this->updateVHosts();
+        $this->line(' - Updating hosts file');
+        $this->updateHosts();
+        $this->info('Restarting server 5/5');
+//        $this->restartXampp();
         if ($this->option('start')) {
             $this->startDevelopment();
         }
-
         $this->commandInfo('Finished running command for: "' . $this->project . '" in: ' . gmdate('H:i:s', $this->startTime->diffInSeconds(now())));
 
-//        $this->line('You may need to do additional steps as outlined in the repository\'s README file such as:');
-//        $this->table(
-//            ['action', 'command'],
-//            [
-//                ['generate app key', 'php artisan key:generate'],
-//                new TableSeparator(),
-//                ['update dependencies', 'npm/composer update'],
-//                new TableSeparator(),
-//                ['check and update outdated dependencies', 'npm/composer outdated'],
-//                ['update .env file', '']
-//            ]
-//        );
+        $this->line('You may need to do additional steps as outlined in the repository\'s README file such as:');
+        $this->table(
+            ['action', 'command'],
+            [
+                ['generate app key', 'php artisan key:generate'],
+                new TableSeparator(),
+                ['update dependencies', 'npm/composer update'],
+                new TableSeparator(),
+                ['check and update outdated dependencies', 'npm/composer outdated'],
+                ['update .env file', '']
+            ]
+        );
     }
 
 
@@ -100,10 +99,10 @@ class Site extends Command
         if (! file_exists(config('app.web-root') . '/' . $this->project)) {
             mkdir(config('app.web-root') . '/' . $this->project);
         }
-//        if (count(scandir(config('app.web-root') . '/' . $this->project)) > 2) {
-//            $this->consoleError('Folder\'s not empty, please select another domain name or empty the folder: ' . config('app.web-root') . '/' . $this->project);
-//            exit;
-//        }
+        if (count(scandir(config('app.web-root') . '/' . $this->project)) > 2) {
+            $this->consoleError('Folder\'s not empty, please select another domain name or empty the folder: ' . config('app.web-root') . '/' . $this->project);
+            exit;
+        }
     }
 }
 //todo - create a log file in the folder so if interrupted the script can pick up where it left off

@@ -97,7 +97,8 @@ trait BaseMethods
                 exec('npm --prefix ' . config('app.web-root') . '/' . $this->project . ' run dev');
             }
         }
-        exec('phpstorm64.exe ' . config('app.web-root') . '/' . $this->project);
+   //     exec(config('editor-path') . ' ' . config('app.web-root') . '/' . $this->project);
+//        dd(config('editor-path') . ' ' . config('app.web-root') . '/' . $this->project);
         // open in editor
         // open in browser
     }

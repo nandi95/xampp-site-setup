@@ -29,7 +29,7 @@ trait XamppMethods
 
     public function restartXampp(): void
     {
-        exec(config('app.xampp-directory') . '/apache_stop.bat');
-        exec(config('app.xampp-directory') . '/apache_start.bat');
+        exec(config('app.xampp-directory') . '/apache\bin\pv -f -k httpd.exe -q');
+        exec(config('app.xampp-directory') . '/apache\bin\httpd.exe');
     }
 }
