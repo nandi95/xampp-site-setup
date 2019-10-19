@@ -1,0 +1,11 @@
+<VirtualHost PROJECT:80>
+    DocumentRoot "WEBROOTPROJECT\public"
+    ServerName PROJECT
+	<Directory "WEBROOTPROJECT\public">
+        Order allow,deny
+        Allow from all
+        AllowOverride All
+        Require all granted
+		Options All
+    </Directory>
+</VirtualHost>
