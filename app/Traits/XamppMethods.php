@@ -29,7 +29,13 @@ trait XamppMethods
 
     public function restartXampp(): void
     {
-        exec(config('app.xampp-directory') . '/apache\bin\pv -f -k httpd.exe -q');
-        exec(config('app.xampp-directory') . '/apache\bin\httpd.exe');
+        $command = config('app.xampp-directory') . '/apache\bin\httpd.exe';
+        if (file_exists('C:\xampp\apache\logs\httpd.pid')) {
+            //todo
+            // doesn't fully restarts, if it did it would require
+            // the console to stay open for the process
+            $command .= ' -k restart';
+        }
+        exec($command);
     }
 }

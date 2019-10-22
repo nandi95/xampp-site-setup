@@ -77,7 +77,7 @@ trait BaseMethods
     {
         file_put_contents(
             'C:\Windows\System32\drivers\etc\hosts',
-            "\n 127.0.0.1 " . $this->project,
+            "\n127.0.0.1 " . $this->project,
             FILE_APPEND
         );
     }
@@ -86,42 +86,73 @@ trait BaseMethods
     /**
      * @return void
      */
-    public function startDevelopment(): void
+    public function copyEnv(): void
     {
-        if (file_exists(config('app.web-root') . '/' . $this->project . '/package.json')) {
-            $packagesJson = file_get_contents(config('app.web-root') . '/' . $this->project . '/package.json');
-            if (strpos($packagesJson, '"watch":') !== -1) {
-                exec('npm --prefix ' . config('app.web-root') . '/' . $this->project . ' run watch');
-            }
-            if (strpos($packagesJson, '"watch":') === -1 && strpos($packagesJson, '"dev":') == -1 ) {
-                exec('npm --prefix ' . config('app.web-root') . '/' . $this->project . ' run dev');
-            }
+        $lines = null;
+        if (file_exists(config('app.web-root') . '/' . $this->project . '/.env.example')) {
+            $lines = $this->parseEnv(config('app.web-root') . '/' . $this->project . '/.env.example');
+        } elseif (file_exists(config('app.web-root') . '/' . $this->project . '/.env.local')) {
+            $lines = $this->parseEnv(config('app.web-root') . '/' . $this->project . '/.env.local');
         }
-   //     exec(config('editor-path') . ' ' . config('app.web-root') . '/' . $this->project);
-//        dd(config('editor-path') . ' ' . config('app.web-root') . '/' . $this->project);
-        // open in editor
-        // open in browser
+
+        if ($lines) {
+            $this->createEnv($lines);
+        }
     }
 
 
     /**
-     * @return void
+     * Returns a key value array representation of the .env
+     * @param string $path
+     *
+     * @return array
      */
-    public function copyEnv(): void
+    private function parseEnv(string $path): array
     {
-        $copied = false;
-        if (file_exists(config('app.web-root') . '/' . $this->project . '/.env.example')) {
-            copy(
-                config('app.web-root') . '/' . $this->project . '/.env.example',
-                config('app.web-root') . '/' . $this->project . '/.env'
-            );
-            $copied = true;
+        $env = file_get_contents($path);
+        $envInline = trim(preg_replace('/\s\s+/', '&', $env));
+        $lines = [];
+        parse_str($envInline, $lines);
+        return $lines;
+    }
+
+
+    private function createEnv(array $lines): void
+    {
+        $keyType = explode('_', array_key_first($lines))[0];
+        $env = '';
+        $needAppKey = false;
+        foreach ($lines as $key => $value) {
+            if (strpos($key, $keyType) === false) {
+                $env .= "\r\n\n";
+            }
+            if ($key === 'APP_KEY' && empty($value)) {
+                $needAppKey = true;
+            }
+            if ($key === 'APP_NAME' && empty($value)) {
+                $value = ucfirst($this->domain);
+            }
+            if ($key === 'APP_URL') {
+                $value = $this->project;
+            }
+            $env .= $key . '=' . $value . "\n";
+            $keyType = explode('_', $key)[0];
         }
-        if (! $copied && file_exists(config('app.web-root') . '/' . $this->project . '/.env.local')) {
-            copy(
-                config('app.web-root') . '/' . $this->project . '/.env.local',
-                config('app.web-root') . '/' . $this->project . '/.env'
-            );
+        file_put_contents(config('app.web-root') . '/' . $this->project . '/.env', $env);
+        if ($needAppKey) {
+            $workingPath = getcwd();
+            chdir(config('app.web-root') . '/' . $this->project);
+            exec('php artisan key:generate');
+            chdir($workingPath);
         }
+    }
+
+
+    public function inAdministratorMode(): bool
+    {
+        $output = null;
+        $systemCode = null;
+        exec('net session', $output, $systemCode);
+        return $systemCode === 0;
     }
 }

@@ -12,11 +12,11 @@ trait GitMethods
     /**
      * Exits application on invalid clone url.
      *
-     * @param string $url
+     * @param $url
      *
      * @return bool
      */
-    public function validCloneUrl(string $url): bool
+    public function validCloneUrl($url): bool
     {
         if (!preg_match('/http.*\.git/', $url) || filter_var($url, FILTER_VALIDATE_URL)  === false) {
             if ($url !== 'placeholder') {

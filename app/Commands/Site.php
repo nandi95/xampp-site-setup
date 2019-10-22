@@ -24,7 +24,7 @@ class Site extends Command
      *
      * @var string
      */
-    protected $signature = 'site {domain?} {--clone-url=} {--branch=} {--domain-extension=.co.uk} {--silent} {--start}';
+    protected $signature = 'site {domain?} {--clone-url=} {--branch=} {--domain-extension=.co.uk} {--silent}';
 
     /**
      * The description of the command.
@@ -37,6 +37,11 @@ class Site extends Command
      * @var string $project
      */
     private $project;
+
+    /**
+     * @var string $domain
+     */
+    private $domain;
 
     /**
      * @var Carbon $startTime
@@ -60,31 +65,19 @@ class Site extends Command
         $this->info('Installing Composer packages 3/5');
         $this->runComposer();
         $this->info('Updating configurations 4/5');
-        $this->line(' - Copying .env file');
+        $this->line(' - Configuring .env file');
         $this->copyEnv();
         $this->line(' - Updating httpd-vhosts.conf');
         $this->updateVHosts();
-        $this->line(' - Updating hosts file');
-        $this->updateHosts();
-        $this->info('Restarting server 5/5');
-//        $this->restartXampp();
-        if ($this->option('start')) {
-            $this->startDevelopment();
+        if ($this->inAdministratorMode()) {
+            $this->line(' - Updating hosts file');
+            $this->updateHosts();
         }
+        $this->info('Restarting xampp 5/5');
+        $this->restartXampp();
+        $this->line('You may need to do additional steps as outlined in the repository\'s README');
         $this->commandInfo('Finished running command for: "' . $this->project . '" in: ' . gmdate('H:i:s', $this->startTime->diffInSeconds(now())));
-
-        $this->line('You may need to do additional steps as outlined in the repository\'s README file such as:');
-        $this->table(
-            ['action', 'command'],
-            [
-                ['generate app key', 'php artisan key:generate'],
-                new TableSeparator(),
-                ['update dependencies', 'npm/composer update'],
-                new TableSeparator(),
-                ['check and update outdated dependencies', 'npm/composer outdated'],
-                ['update .env file', '']
-            ]
-        );
+        $this->line('site\'s ready at: http://' . $this->project);
     }
 
 
@@ -94,7 +87,7 @@ class Site extends Command
         $default = explode('/', $this->cloneUrl);
         $default = str_replace('.git', '', end($default));
         $this->project  = config('app.domain-prefix');
-        $this->project .= $this->argument('domain') ? $this->argument('domain') : $this->ask('What\'s the domain name?', $default);
+        $this->project .= strtolower($this->argument('domain') ? $this->argument('domain') : $this->ask('What\'s the domain name?', $default));
         $this->project .= $this->option('domain-extension');
         if (! file_exists(config('app.web-root') . '/' . $this->project)) {
             mkdir(config('app.web-root') . '/' . $this->project);
